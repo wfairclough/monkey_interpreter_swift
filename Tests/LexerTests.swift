@@ -62,6 +62,11 @@ func testNextToken() {
         10 != 9;
 
         // This is a comment
+        //// Comment1
+        //    Comment2
+        /////     Comment3
+        //Comment4
+        / NotAComment
     """
 
     @Test
@@ -108,7 +113,6 @@ func testNextToken() {
 
         for expectedToken in expectedTokens {
             let token = sampleCodeLexer.next() ?? .eof
-            print("Expected: .\(expectedToken), got: .\(token)")
             #expect(expectedToken == token, "Expected token .\(expectedToken), got .\(token)")
         }
     }
@@ -191,11 +195,16 @@ func testNextToken() {
             .integer(9),
             .semicolon,
             .singleLineComment("This is a comment"),
+            .singleLineComment("Comment1"),
+            .singleLineComment("Comment2"),
+            .singleLineComment("Comment3"),
+            .singleLineComment("Comment4"),
+            .slash,
+            .ident("NotAComment"),
         ]
 
         for expectedToken in expectedTokens {
             let token = sampleCodeLexer.next() ?? .eof
-            print("Expected: .\(expectedToken), got: .\(token)")
             #expect(expectedToken == token, "Expected token .\(expectedToken), got .\(token)")
         }
     }

@@ -235,8 +235,8 @@ struct Lexer: Sequence, IteratorProtocol {
         return ch
     }
 
-    private mutating func readChar(until: (Character) -> Bool) -> Character? {
-        while let ch = ch, until(ch) {
+    private mutating func readChar(while whileFn: (Character) -> Bool) -> Character? {
+        while let ch = ch, whileFn(ch) {
             _ = readChar()
         }
         return ch
@@ -292,8 +292,8 @@ struct Lexer: Sequence, IteratorProtocol {
 
     private mutating func readSingleLineComment() -> Token {
         var chars = [Character]()
-        _ = readChar(until: { !$0.isWhitespace })
-        _ = readChar()
+        _ = readChar(while: { $0 == "/" })
+        _ = readChar(while: { $0.isWhitespace })
         while let ch = ch, ch != "\n" {
             chars.append(ch)
             _ = readChar()
