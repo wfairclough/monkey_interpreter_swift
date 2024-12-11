@@ -12,7 +12,7 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .executableTarget(
-            name: "Monkey",
+            name: "monkey",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
@@ -20,7 +20,7 @@ let package = Package(
         .testTarget(
             name: "MonkeyTests",
             dependencies: [
-                "Monkey"
+                "monkey"
             ]
         ),
     ],
