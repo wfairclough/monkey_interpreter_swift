@@ -6,11 +6,22 @@ enum Token: Equatable {
 
     case ident(String)
     case integer(Int)
+    case singleLineComment(String)
 
     case assign
-    case plus
+    case bang
     case equal
     case notEqual
+
+    case plus
+    case minus
+    case asterisk
+    case slash
+
+    case lt
+    case lte
+    case gt
+    case gte
 
     case comma
     case semicolon
@@ -22,6 +33,11 @@ enum Token: Equatable {
 
     case function
     case `let`
+    case `if`
+    case `else`
+    case `return`
+    case `true`
+    case `false`
 
     public var literal: String {
         switch self {
@@ -33,14 +49,32 @@ enum Token: Equatable {
             return value
         case .integer(let value):
             return String(value)
+        case .singleLineComment(let value):
+            return value
         case .assign:
             return "="
         case .equal:
             return "=="
         case .notEqual:
             return "!="
+        case .bang:
+            return "!"
         case .plus:
             return "+"
+        case .minus:
+            return "-"
+        case .asterisk:
+            return "*"
+        case .slash:
+            return "/"
+        case .lt:
+            return "<"
+        case .lte:
+            return "<="
+        case .gt:
+            return ">"
+        case .gte:
+            return ">="
         case .comma:
             return ","
         case .semicolon:
@@ -57,11 +91,22 @@ enum Token: Equatable {
             return "fn"
         case .let:
             return "let"
+        case .if:
+            return "if"
+        case .else:
+            return "else"
+        case .return:
+            return "return"
+        case .true:
+            return "true"
+        case .false:
+            return "false"
         }
     }
+
 }
 
-struct Lexer : Sequence, IteratorProtocol {
+struct Lexer: Sequence, IteratorProtocol {
     let input: String
     private var position: Int = 0
     private var readPosition: Int = 0
@@ -78,6 +123,8 @@ struct Lexer : Sequence, IteratorProtocol {
 
     mutating func next() -> Token? {
         switch ch {
+        case ch where ch == nil:
+            return nil
         case ch where ch?.isWhitespace == true:
             _ = readChar()
             return next()
@@ -99,11 +146,6 @@ struct Lexer : Sequence, IteratorProtocol {
         case "}":
             _ = readChar()
             return .rbrace
-        case ch where ch == nil:
-            return nil
-        case "f" where peekChar() == "n":
-            _ = readChar(n: 2)
-            return Token.function
         case "=" where peekChar() == "=":
             _ = readChar(n: 2)
             return .equal
@@ -113,19 +155,69 @@ struct Lexer : Sequence, IteratorProtocol {
         case "+":
             _ = readChar()
             return .plus
+        case "-":
+            _ = readChar()
+            return .minus
+        case "*":
+            _ = readChar()
+            return .asterisk
+        case "/" where peekChar() == "/":
+            return readSingleLineComment()
+        case "/":
+            _ = readChar()
+            return .slash
+        case "<" where peekChar() == "=":
+            _ = readChar(n: 2)
+            return .lte
+        case "<":
+            _ = readChar()
+            return .lt
+        case ">" where peekChar() == "=":
+            _ = readChar(n: 2)
+            return .gte
+        case ">":
+            _ = readChar()
+            return .gt
         case "!" where peekChar() == "=":
             _ = readChar(n: 2)
             return .notEqual
-        case "l" where peek(expecting: "et"):
-            _ = readChar(n: 3)
-            return Token.let
+        case "!":
+            _ = readChar()
+            return .bang
         case ch where ch?.isLetter == true:
-            let token = readIdentifier()
-            return token
+            switch ch {
+            case "l" where peek(keyword: .let):
+                _ = readChar(n: Token.let.literal.count)
+                return Token.let
+            case "i" where peek(keyword: .if):
+                _ = readChar(n: Token.if.literal.count)
+                return Token.if
+            case "e" where peek(keyword: .else):
+                _ = readChar(n: Token.else.literal.count)
+                return Token.else
+            case "r" where peek(keyword: .return):
+                _ = readChar(n: Token.return.literal.count)
+                return Token.return
+            case "t" where peek(keyword: .true):
+                _ = readChar(n: Token.true.literal.count)
+                return Token.true
+            case "f" where peek(keyword: .false):
+                _ = readChar(n: Token.false.literal.count)
+                return Token.false
+            case "f" where peek(keyword: .function):
+                _ = readChar(n: Token.function.literal.count)
+                return Token.function
+            default:
+                let token = readIdentifier()
+                return token
+            }
         case ch where ch?.isNumber == true:
             let token = readInteger()
             return token
         default:
+            print("Illegal character: \(ch ?? "#")")
+            print("Position: \(position)")
+            print("Read position: \(readPosition)")
             return .illegal
         }
     }
@@ -146,6 +238,13 @@ struct Lexer : Sequence, IteratorProtocol {
         return ch
     }
 
+    private mutating func readChar(until: (Character) -> Bool) -> Character? {
+        while let ch = ch, until(ch) {
+            _ = readChar()
+        }
+        return ch
+    }
+
     private func peekChar() -> Character? {
         if readPosition >= input.count {
             return nil
@@ -154,16 +253,26 @@ struct Lexer : Sequence, IteratorProtocol {
     }
 
     private mutating func peek(expecting: String) -> Bool {
-        let start = readPosition
-        defer {
-            self.readPosition = start
+        guard let actual = input[safe: readPosition..<readPosition + expecting.count] else {
+            return false
         }
-        for ch in expecting {
-            if readChar() != ch {
-                return false
-            }
+        return actual == expecting
+    }
+
+    private mutating func peek(keyword: Token) -> Bool {
+        let expecting = keyword.literal
+        guard let actual = input[safe: (readPosition - 1)..<readPosition + (expecting.count - 1)] else {
+            print("No actual")
+            return false
         }
-        return true
+        guard let nextChar = input[safe: readPosition + (expecting.count - 1)] else {
+            print("No next char")
+            return false
+        }
+        return
+            (nextChar.isWhitespace || nextChar == Token.semicolon.literal.first
+            || nextChar == Token.rparen.literal.first || nextChar == Token.lparen.literal.first)
+            && actual == expecting
     }
 
     private mutating func readIdentifier() -> Token {
@@ -183,15 +292,15 @@ struct Lexer : Sequence, IteratorProtocol {
         }
         return Token.integer(Int(String(chars))!)
     }
-}
 
-extension String {
-    // func subscript(safe index: Int) -> Element? {
-    subscript(safe index: Int) -> Character? {
-        if index < 0 || index >= count {
-            return nil
+    private mutating func readSingleLineComment() -> Token {
+        var chars = [Character]()
+        _ = readChar(until: { !$0.isWhitespace })
+        _ = readChar()
+        while let ch = ch, ch != "\n" {
+            chars.append(ch)
+            _ = readChar()
         }
-        let value = self[String.Index(utf16Offset: index, in: self)]
-        return value
+        return Token.singleLineComment(String(chars))
     }
 }

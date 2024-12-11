@@ -31,7 +31,7 @@ func testNextToken() {
 }
 
 @Suite(.serialized) class LexerTests {
-    static let codeSample = """
+    static let simpleSampleCode = """
         let five = 5;
         let ten = 10;
         let add = fn(x, y) {
@@ -39,9 +39,34 @@ func testNextToken() {
         };
         let result = add(five, ten);
         """
+
+    static let complexSampleCode = """
+        let five = 5;
+        let ten = 10;
+
+        let add = fn(x, y) {
+            x + y;
+        };
+
+        let result = add(five, ten);
+        !-/*5;
+        5 < 10 > 5;
+
+        if (5 < 10) {
+            return true;
+        } else {
+            return false;
+        }
+
+        10 == 10;
+        10 != 9;
+
+        // This is a comment
+    """
+
     @Test
-    func testNextTokenWithCode() {
-        var sampleCodeLexer = Lexer.parse(input: LexerTests.codeSample)
+    func testNextTokenWithSimpleCode() {
+        var sampleCodeLexer = Lexer.parse(input: LexerTests.simpleSampleCode)
         let expectedTokens = [
             Token.let,
             .ident("five"),
@@ -87,4 +112,92 @@ func testNextToken() {
             #expect(expectedToken == token, "Expected token .\(expectedToken), got .\(token)")
         }
     }
+    
+    @Test
+    func testNextTokenWithComplexCode() {
+        var sampleCodeLexer = Lexer.parse(input: LexerTests.complexSampleCode)
+        let expectedTokens = [
+            Token.let,
+            .ident("five"),
+            .assign,
+            .integer(5),
+            .semicolon,
+            .let,
+            .ident("ten"),
+            .assign,
+            .integer(10),
+            .semicolon,
+            .let,
+            .ident("add"),
+            .assign,
+            .function,
+            .lparen,
+            .ident("x"),
+            .comma,
+            .ident("y"),
+            .rparen,
+            .lbrace,
+            .ident("x"),
+            .plus,
+            .ident("y"),
+            .semicolon,
+            .rbrace,
+            .semicolon,
+            .let,
+            .ident("result"),
+            .assign,
+            .ident("add"),
+            .lparen,
+            .ident("five"),
+            .comma,
+            .ident("ten"),
+            .rparen,
+            .semicolon,
+            .bang,
+            .minus,
+            .slash,
+            .asterisk,
+            .integer(5),
+            .semicolon,
+            .integer(5),
+            .lt,
+            .integer(10),
+            .gt,
+            .integer(5),
+            .semicolon,
+            .if,
+            .lparen,
+            .integer(5),
+            .lt,
+            .integer(10),
+            .rparen,
+            .lbrace,
+            .return,
+            .true,
+            .semicolon,
+            .rbrace,
+            .else,
+            .lbrace,
+            .return,
+            .false,
+            .semicolon,
+            .rbrace,
+            .integer(10),
+            .equal,
+            .integer(10),
+            .semicolon,
+            .integer(10),
+            .notEqual,
+            .integer(9),
+            .semicolon,
+            .singleLineComment("This is a comment"),
+        ]
+
+        for expectedToken in expectedTokens {
+            let token = sampleCodeLexer.next() ?? .eof
+            print("Expected: .\(expectedToken), got: .\(token)")
+            #expect(expectedToken == token, "Expected token .\(expectedToken), got .\(token)")
+        }
+    }
+
 }

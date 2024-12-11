@@ -1,0 +1,22 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:monkey_interpreter_swift}",
+      "name": "Debug monkey",
+      "program": "${workspaceFolder:monkey_interpreter_swift}/.build/debug/monkey",
+      "preLaunchTask": "swift: Build Debug monkey"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:monkey_interpreter_swift}",
+      "name": "Release monkey",
+      "program": "${workspaceFolder:monkey_interpreter_swift}/.build/release/monkey",
+      "preLaunchTask": "swift: Build Release monkey"
+    }
+  ]
+}
