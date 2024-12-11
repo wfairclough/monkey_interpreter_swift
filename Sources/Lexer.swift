@@ -1,7 +1,7 @@
 import Foundation
 
 enum Token: Equatable {
-    case illegal
+    case illegal(position: Int)
     case eof
 
     case ident(String)
@@ -41,7 +41,7 @@ enum Token: Equatable {
 
     public var literal: String {
         switch self {
-        case .illegal:
+        case .illegal(_):
             return "ILLEGAL"
         case .eof:
             return ""
@@ -215,10 +215,7 @@ struct Lexer: Sequence, IteratorProtocol {
             let token = readInteger()
             return token
         default:
-            print("Illegal character: \(ch ?? "#")")
-            print("Position: \(position)")
-            print("Read position: \(readPosition)")
-            return .illegal
+            return .illegal(position: position)
         }
     }
 

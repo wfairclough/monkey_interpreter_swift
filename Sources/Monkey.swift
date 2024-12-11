@@ -12,7 +12,8 @@ struct MonkeyCommand: ParsableCommand {
         commandName: "monkey",
         abstract: "Simple interpreter for the Monkey programming language written in Swift",
         version: "1.0.0",
-        subcommands: [LexerCommand.self]
+        subcommands: [LexerCommand.self, ReplCommand.self],
+        defaultSubcommand: ReplCommand.self
     )
 
     mutating func run() throws {
@@ -34,5 +35,17 @@ struct LexerCommand: ParsableCommand {
         for token in lexer {
             print("Token: \(token)")
         }
+    }
+}
+
+struct ReplCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "repl",
+        abstract: "Read-Eval-Print Loop for the Monkey programming language"
+    )
+
+    mutating func run() throws {
+        let repl = Repl()
+        repl.run()
     }
 }
