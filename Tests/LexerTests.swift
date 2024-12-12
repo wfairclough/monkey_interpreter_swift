@@ -205,6 +205,10 @@ func testNextToken() {
 
         for expectedToken in expectedTokens {
             let token = sampleCodeLexer.next() ?? .eof
+            if case .illegal(let position) = token {
+                #expect(Bool(false), "Illegal token found at position \(position)")
+                break
+            }
             #expect(expectedToken == token, "Expected token .\(expectedToken), got .\(token)")
         }
     }
