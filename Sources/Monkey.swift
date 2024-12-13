@@ -50,10 +50,13 @@ struct ParserCommand: ParsableCommand {
     mutating func run() throws {
         let lexer = Lexer.parse(input: input)
         var parser = Parser(lexer: lexer)
-        let program = parser.parse()
+        let program = try! parser.parse()
         print("Parsed program:")
         print(program)
-        program.statements.forEach { print($0) }
+        switch program {
+            case .statements(let statements):
+                statements.forEach { print($0) }
+        }
     }
 }
 

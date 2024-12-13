@@ -13,7 +13,7 @@ struct Repl {
                 let lexer = Lexer.parse(input: input)
                 print(lexer)
                 var p = Parser(lexer: lexer)
-                let program = p.parse()
+                let program = try! p.parse()
                 // for token in lexer {
                 //     if token == .eof {
                 //         break
@@ -26,7 +26,10 @@ struct Repl {
                 // }
                 print("Parsed program:")
                 print(program)
-                program.statements.forEach { print($0) }
+                switch program {
+                    case .statements(let statements):
+                        statements.forEach { print($0) }
+                }
             }
         }
     }

@@ -5,15 +5,40 @@ enum Statement {
     case expression(Expression)
 }
 
-struct Program {
-    let statements: [Statement]
+enum BlockStatement {
+    case statements([Statement])
 }
 
-struct Identifier {
-    let value: String
+typealias Program = BlockStatement
+
+enum Identifier {
+    case name(String)
 }
 
-struct Expression {
-    let value: Token
+enum InfixOperator {
+    case add
+    case subtract
+    case multiply
+    case divide
+    case lessThan
+    case lessThanOrEqual
+    case greaterThan
+    case greaterThanOrEqual
+    case equal
+    case notEqual
+}
+
+enum PrefixOperator {
+    case bang
+    case minus
+}
+
+indirect enum Expression {
+    case number(Int)
+    case boolean(Bool)
+    case prefix(operator: PrefixOperator, right: Expression)
+    case infix(left: Expression, operator: InfixOperator, right: Expression)
+    case identifier(Identifier)
+    case function(parameters: [Identifier], body: BlockStatement)
 }
 
