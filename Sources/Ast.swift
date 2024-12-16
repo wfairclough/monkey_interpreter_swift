@@ -34,8 +34,9 @@ enum PrefixOperator {
 }
 
 indirect enum Expression {
-    case number(Int)
-    case boolean(Bool)
+    case numericLiteral(Int)
+    case booleanLiteral(Bool)
+    case group(Expression)
     case prefix(operator: PrefixOperator, right: Expression)
     case infix(left: Expression, operator: InfixOperator, right: Expression)
     case identifier(Identifier)

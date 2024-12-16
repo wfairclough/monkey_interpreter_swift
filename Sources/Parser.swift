@@ -4,31 +4,32 @@ enum ParserError: Error {
 
 struct Parser: Sequence, IteratorProtocol {
     private var lexer: Lexer
-    private var _lastPeekedToken: Token?
+    private var currentToken: Token?
+    private var peekToken: Token?
 
     init(lexer: Lexer) {
         self.lexer = lexer
+        _ = next()
     }
 
-    mutating func next() -> (curToken: Token?, peekToken: Token?)? {
-        let curToken = _lastPeekedToken ?? lexer.next()
-        let peekToken = lexer.next()
-        _lastPeekedToken = peekToken
+    mutating func next() -> Token? {
+        currentToken = peekToken
+        peekToken = lexer.next()
 
         guard let peekToken = peekToken else { return nil }
-        return (curToken, peekToken)
+        return peekToken
     }
 
     mutating func parse() throws -> Program {
         var statements: [Statement] = []
 
-        while let (ct, pt) = next(), ct != nil {
-            guard let ct = ct else { break }
+        while let pt = next() {
+            guard let ct = currentToken else { break }
 
             switch ct {
             case .let:
                 guard let stmt = parseLetStatement() else {
-                    print("Failed to parse let statement .\(ct) peek: .\(pt ?? .eof)")
+                    print("Failed to parse let statement .\(currentToken ?? .eof) peek: .\(peekToken ?? .eof)")
                     throw ParserError.invalidToken
                 }
                 statements.append(stmt)
@@ -42,7 +43,7 @@ struct Parser: Sequence, IteratorProtocol {
                 print("Reached EOF")
                 break
             default:
-                print("Unknown token .\(ct) .\(pt ?? .eof)")
+                print("Unknown token .\(currentToken ?? .eof) .\(peekToken ?? .eof)")
                 break
             }
         }
@@ -50,50 +51,57 @@ struct Parser: Sequence, IteratorProtocol {
     }
 
     private mutating func parseLetStatement() -> Statement? {
-        guard let (ct, pt) = next() else { return nil }
+        guard currentToken == .let else { return nil }
+        guard let pt = next() else { return nil }
+        guard let ct = currentToken else { return nil }
         guard case .ident(let name) = ct else { return nil }
         print("Parsing let statement for \(name)")
         guard case .assign = pt else { return nil }
         print("Is assign")
-        guard let (_, pt) = next() else { return nil }
-        guard let expressionToken = pt else { return nil }
+        guard let expressionToken  = next() else { return nil }
         print("Expression token: \(expressionToken)")
         guard let expression = parseExpression() else { return nil }
+        print("Expression: \(expression)")
 
         return Statement.let(name: .name(name), value: expression)
     }
 
     private mutating func parseExpression() -> Expression? {
-        guard let (ct, pt) = next() else { return nil }
-        guard let ct = ct else { return nil }
-        guard let pt = pt else { return nil }
-        print("Parsing expression for \(ct) peek: \(pt)")
+        guard let pt = next() else { return nil }
+        guard let ct = currentToken else { return nil }
+        print("Parsing expression for .\(ct) peek: .\(pt)")
 
         switch (ct, pt) {
-            case (.integer(let v), .lte):
+            case (.numeric(let v), .eof):
+                return .numericLiteral(v)
+            case (.numeric(let v), .semicolon):
+                return .numericLiteral(v)
+            case (.numeric(let v), .rparen):
+                return .numericLiteral(v)
+
+            case (.numeric(let v), _):
+                return parseInfixExpression(left: .numericLiteral(v))
+
+            case (.ident(let n), .eof):
+                return .identifier(.name(n))
+            case (.ident(let n), .semicolon):
+                return .identifier(.name(n))
+            case (.ident(let n), .rparen):
+                return .identifier(.name(n))
+
+            case (.ident(let n), _):
+                return parseInfixExpression(left: .identifier(.name(n)))
+
+            case (.minus, _):
                 fallthrough
-            case (.integer(let v), .lt):
-                fallthrough
-            case (.integer(let v), .gte):
-                fallthrough
-            case (.integer(let v), .gt):
-                fallthrough
-            case (.integer(let v), .equal):
-                fallthrough
-            case (.integer(let v), .notEqual):
-                fallthrough
-            case (.integer(let v), .slash):
-                fallthrough
-            case (.integer(let v), .asterisk):
-                fallthrough
-            case (.integer(let v), .minus):
-                fallthrough
-            case (.integer(let v), .plus):
-                return parseInfixExpression(left: .integer(v))
-            case (.integer(let v), .eof):
-                return .integer(v)
-            case (.integer(let v), .semicolon):
-                return .integer(v)
+            case (.bang, _):
+                return parsePrefixExpression()
+
+            case (.lparen, _):
+                return parseGroupedExpression()
+
+            default:
+                return nil
             //     return .integer(value)
             // case .ident(let name):
             //     return .identifier(.name(name))
@@ -143,26 +151,23 @@ struct Parser: Sequence, IteratorProtocol {
     }
 
     private mutating func parseGroupedExpression() -> Expression? {
+        print("Parsing grouped expression ()")
+        guard case .lparen = currentToken else { return nil }
         guard let expression = parseExpression() else { return nil }
-        guard let (ct, pt) = next() else { return nil }
-        guard let ct = ct else { return nil }
-        guard let pt = pt else { return nil }
-        print("Parsing grouped expression for \(ct) peek: \(pt)")
+        print("Parsing grouped expression for Ex: \(expression)")
+        _ = next()
+        guard case .rparen = currentToken else { return nil }
 
-        guard case .rparen = ct else { return nil }
-
-        return expression
+        return .group(expression)
     }
 
     private mutating func parsePrefixExpression() -> Expression? {
-        guard let (ct, pt) = next() else { return nil }
-        guard let ct = ct else { return nil }
-        guard let pt = pt else { return nil }
-        print("Parsing prefix expression for \(ct) peek: \(pt)")
+        guard let oper = currentToken else { return nil }
+        print("Parsing prefix expression for \(oper.literal)")
 
         guard let right = parseExpression() else { return nil }
 
-        switch ct {
+        switch oper {
             case .bang:
                 return .prefix(operator: .bang, right: right)
             case .minus:
@@ -173,15 +178,13 @@ struct Parser: Sequence, IteratorProtocol {
     }
 
     private mutating func parseInfixExpression(left: Expression) -> Expression? {
-        guard let (ct, pt) = next() else { return nil }
-        guard let ct = ct else { return nil }
-        guard let pt = pt else { return nil }
-        print("Parsing infix expression for \(ct) peek: \(pt)")
+        guard let pt = next() else { return nil }
+        guard let oper = currentToken else { return nil }
+        print("Parsing infix expression for .\(left) \(oper.literal) .\(pt)")
 
-        guard let left = parseExpression() else { return nil }
         guard let right = parseExpression() else { return nil }
 
-        switch ct {
+        switch oper {
             case .equal:
                 return .infix(left: left, operator: .equal, right: right)
             case .notEqual:

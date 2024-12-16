@@ -4,7 +4,7 @@ enum Token: Equatable {
     case eof
 
     case ident(String)
-    case integer(Int)
+    case numeric(Int)
     case singleLineComment(String)
 
     case assign
@@ -46,7 +46,7 @@ enum Token: Equatable {
             return ""
         case .ident(let value):
             return value
-        case .integer(let value):
+        case .numeric(let value):
             return String(value)
         case .singleLineComment(let value):
             return value

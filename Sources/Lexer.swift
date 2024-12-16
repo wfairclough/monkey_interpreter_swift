@@ -179,7 +179,7 @@ struct Lexer: Sequence, IteratorProtocol {
             chars.append(ch)
             _ = readChar()
         }
-        return Token.integer(Int(String(chars))!)
+        return Token.numeric(Int(String(chars))!)
     }
 
     private mutating func readSingleLineComment() -> Token {
