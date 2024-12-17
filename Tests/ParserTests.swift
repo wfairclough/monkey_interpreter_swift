@@ -66,3 +66,53 @@ func testParsingLetStatements() throws {
         ))
     )))
 }
+
+@Test
+func testParsingFnAndReturnStatements() {
+    let input = """
+        fn(x, y) {
+            return x + y;
+        }
+    """
+
+    let lexer = Lexer.parse(input: input)
+    var parser = Parser(lexer: lexer)
+    let programResult = Result { try parser.parse() }
+
+    guard case .success(let program) = programResult else {
+        printParserError(programResult)
+        #expect(Bool(false))
+        return
+    }
+
+    guard case let .statements(statements) = program else { return }
+    #expect(statements.count == 1)
+
+    guard case let .expression(expression) = statements[0] else { return }
+    guard case let .function(parameters: params, body: body) = expression else { return }
+    #expect(params == .named([Identifier.name("x"), Identifier.name("y")]))
+    guard case let .statements(bodyStatements) = body else { return }
+    #expect(bodyStatements.count == 1)
+    guard case let .expression(returnExpression) = bodyStatements[0] else { return }
+    guard case let .infix(left: left, operator: op, right: right) = returnExpression else { return }
+    #expect(left == .identifier(Identifier.name("x")))
+    #expect(op == .add)
+    #expect(right == .identifier(Identifier.name("y")))
+}
+
+func printParserError(_ result: Result<Program, Error>) {
+    switch result {
+    case .success(let program):
+        print("Program: \(program)")
+    case .failure(let error):
+        switch error {
+            case ParserError.invalidToken(let message, let currToken, let peekToken):
+                print("Error: \(message)")
+                print("Current token: '\(currToken?.literal ?? "")'")
+                print("Peek token: '\(peekToken?.literal ?? "")'")
+            default:
+                print("Error: \(error)")
+        }
+    }
+}
+

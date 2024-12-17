@@ -15,6 +15,10 @@ enum Identifier: Equatable {
     case name(String)
 }
 
+enum FuncParams: Equatable {
+    case named([Identifier])
+}
+
 enum InfixOperator: Equatable {
     case add
     case subtract
@@ -40,6 +44,6 @@ indirect enum Expression: Equatable {
     case prefix(operator: PrefixOperator, right: Expression)
     case infix(left: Expression, operator: InfixOperator, right: Expression)
     case identifier(Identifier)
-    case function(parameters: [Identifier], body: BlockStatement)
+    case function(parameters: FuncParams, body: BlockStatement)
 }
 
