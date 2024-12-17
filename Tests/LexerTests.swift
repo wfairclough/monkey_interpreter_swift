@@ -21,10 +21,10 @@ func testNextToken() {
 
     var lexer = Lexer.parse(input: input)
 
-    for (i, expectedToken) in tests.enumerated() {
+    for (idx, expectedToken) in tests.enumerated() {
         let token = lexer.next()
 
-        #expect(expectedToken == token, "test \(i) - token type")
+        #expect(expectedToken == token, "test \(idx) - token type")
     }
 }
 
@@ -114,7 +114,8 @@ func testNextToken() {
             #expect(expectedToken == token, "Expected token .\(expectedToken), got .\(token)")
         }
     }
-    
+
+    // swiftlint:disable function_body_length
     @Test
     func testNextTokenWithComplexCode() {
         var sampleCodeLexer = Lexer.parse(input: LexerTests.complexSampleCode)
@@ -210,5 +211,6 @@ func testNextToken() {
             #expect(expectedToken == token, "Expected token .\(expectedToken), got .\(token)")
         }
     }
+    // swiftlint:enable function_body_length
 
 }

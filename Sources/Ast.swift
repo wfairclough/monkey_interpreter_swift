@@ -1,21 +1,21 @@
 
-enum Statement {
+enum Statement: Equatable {
     case `let`(name: Identifier, value: Expression)
     case identifier(Identifier)
     case expression(Expression)
 }
 
-enum BlockStatement {
+enum BlockStatement: Equatable {
     case statements([Statement])
 }
 
 typealias Program = BlockStatement
 
-enum Identifier {
+enum Identifier: Equatable {
     case name(String)
 }
 
-enum InfixOperator {
+enum InfixOperator: Equatable {
     case add
     case subtract
     case multiply
@@ -28,12 +28,12 @@ enum InfixOperator {
     case notEqual
 }
 
-enum PrefixOperator {
+enum PrefixOperator: Equatable {
     case bang
     case minus
 }
 
-indirect enum Expression {
+indirect enum Expression: Equatable {
     case numericLiteral(Int)
     case booleanLiteral(Bool)
     case group(Expression)

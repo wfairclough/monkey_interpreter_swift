@@ -1,0 +1,34 @@
+# Directory and file filters
+included:
+  - Plugins
+  - Source
+  - Tests
+  - Package.swift
+
+opt_in_rules:
+  - closure_body_length
+  - number_separator
+  - redundant_type_annotation
+
+# Configurations
+closure_body_length:
+    warning: 50
+    error: 100
+function_body_length:
+  warning: 60
+  excluded:
+    - "Tests/*"
+identifier_name:
+  excluded:
+    - id
+large_tuple: 3
+number_separator:
+  minimum_length: 5
+redundant_type_annotation:
+  consider_default_literal_types_redundant: true
+trailing_comma:
+  mandatory_comma: true
+type_body_length: 400
+unneeded_override:
+  affect_initializers: true
+

@@ -12,6 +12,7 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.57.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
     ],
     targets: [
@@ -21,6 +22,9 @@ let package = Package(
             name: "Monkey",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
+            plugins: [
+                .plugin(name: "swiftlint", package: "SwiftLint"),
             ]
         ),
         .testTarget(
